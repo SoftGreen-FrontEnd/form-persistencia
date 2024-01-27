@@ -26,23 +26,60 @@
 	{#await fetchResponse}
 	    <p>...waiting</p>
 	{:then data}
-	<div >
+	<div>
 		<form>
 		<fieldset>
 		<legend>{data.name}</legend>
-		{#each data.datasets as {label, value, placeholder}, i}
+	{#each data.datasets as {label, type, value, placeholder, options, status }, i}
 		<label for="job">{label}</label>
-		<input type="text" bind:value={value} on:focus={() => past = value} on:blur={() => {
-			// compare if the past value is different from current so it can send to the data base
+		{#if type === "select"}
+    		<select on:focus={(e) => past = e.target.value} on:blur={(e) => {
+				if(past != e.target.value){
+					postValue(i+1);
+					console.log([{"name": label}, {"value": options[e.target.value].label},])
+				}
+			}}>
+        		{#each options as {label, value, selected}}
+        			<option value={value} selected={selected}>{label}</option>
+        		{/each}
+    		</select>
+    {:else if type === "checkbox"}
+    	<input type="checkbox" on:focus={() => past = status} on:blur={() => {
+			if (status != past){
+				postValue(i+1);
+				console.log([{"name": label}, {"value": status},]);
+			}
+		}} bind:checked={status} placeholder={placeholder}>
+    {:else if type === "textarea"}
+    	<textarea bind:value={value} on:focus={() => past = value} on:blur={() => {
 			if(past.localeCompare(value) != 0){
 				postValue(i+1);
 				console.log([{"name": label}, {"value": value},]);
 			}
+		}} placeholder={placeholder}></textarea>
+    {:else if type === "text"}
+    	<input type="text" bind:value={value} on:focus={() => past = value} on:blur={() => {
+        	if(past.localeCompare(value) != 0){
+				postValue(i+1);
+				console.log([{"name": label}, {"value": value},]);
+			}
 		}} placeholder={placeholder}>
-		{/each}
+    {:else if type === "number"}
+    	<input type="number" bind:value={value} on:focus={() => past = value} on:blur={() => {
+			if(past != value){
+				postValue(i+1);
+				console.log([{"name": label}, {"value": value},]);
+			}
+		}} placeholder={placeholder}>
+	{:else if type === "radio"}
+		<input type="radio"  value={value}>
+    {:else}
+    	<input type={type} placeholder={placeholder}>
+    {/if}
+	{/each}
 		<p id="total"></p>
 		</form>
-		</div>
+	</div>
 	{/await}
 
 </main>
